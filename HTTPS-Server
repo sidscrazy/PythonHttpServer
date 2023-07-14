@@ -1,0 +1,34 @@
+# This is an HTTPS server listening on port 8585
+# This can be deployed on a home machine with TCP port forwarding set
+# for port 8585 from the public router
+# The server should have self signed or official signed 
+# certificate files namely cert.pem and key.pem
+# These files are just public and private keys extracted from
+# the certificate file of format: myfile.cer using openssl
+#    openssl x509 -outform pem -in mycert.cer -out mycert.pem
+#    openssl pkcs12 -in mycert.pfx -nocerts -out key.pem -nodes
+
+
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import ssl
+
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'Hello, World!')
+
+def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler):
+    server_address = ('', 8585)
+    httpd = server_class(server_address, handler_class)
+    httpd.socket = ssl.wrap_socket(httpd.socket,
+                                   server_side=True,
+                                   certfile='cert.pem', 
+                                   keyfile='key.pem', 
+                                   ssl_version=ssl.PROTOCOL_TLS)
+    print(f'Starting httpsd server on port 8585')
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run()
